@@ -7,7 +7,7 @@ type Props = {
 };
 
 export default function WorkflowResults({ data }: Props) {
-  console.log('Rendering WorkflowResults with data:', data);
+  console.log('WorkflowResults received data:', JSON.stringify(data, null, 2));
   
   if (!data) {
     console.log('No data provided to WorkflowResults');
@@ -17,8 +17,13 @@ export default function WorkflowResults({ data }: Props) {
   const { competitorAnalysis, loyaltyProgram } = data;
 
   const renderCompetitorSection = () => {
-    if (!competitorAnalysis) return null;
-    console.log('Rendering competitor analysis section');
+    if (!competitorAnalysis) {
+      console.log('No competitor analysis data available');
+      return null;
+    }
+
+    console.log('Rendering competitor analysis section with:', 
+      JSON.stringify(competitorAnalysis, null, 2));
 
     return (
       <section className="bg-white p-6 rounded-lg shadow">
@@ -34,16 +39,25 @@ export default function WorkflowResults({ data }: Props) {
             </div>
           </div>
 
-          {/* Competitors List */}
-          {competitorAnalysis.main_competitors && competitorAnalysis.main_competitors.length > 0 && (
+          {/* Competitors List - with explicit null check */}
+          {Array.isArray(competitorAnalysis.main_competitors) && (
             <div>
               <h3 className="text-lg font-medium text-gray-900">Main Competitors</h3>
               <div className="mt-2 bg-gray-50 p-4 rounded-md">
-                <ul className="list-disc list-inside space-y-1">
-                  {competitorAnalysis.main_competitors.map((competitor, index) => (
-                    <li key={index} className="text-gray-700">{competitor}</li>
-                  ))}
-                </ul>
+                {competitorAnalysis.main_competitors.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1">
+                    {competitorAnalysis.main_competitors.map((competitor, index) => {
+                      console.log('Rendering competitor:', competitor, 'at index:', index);
+                      return (
+                        <li key={index} className="text-gray-700">
+                          {competitor}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500">No competitors listed</p>
+                )}
               </div>
             </div>
           )}
@@ -76,8 +90,13 @@ export default function WorkflowResults({ data }: Props) {
   };
 
   const renderLoyaltySection = () => {
-    if (!loyaltyProgram) return null;
-    console.log('Rendering loyalty program section');
+    if (!loyaltyProgram) {
+      console.log('No loyalty program data available');
+      return null;
+    }
+
+    console.log('Rendering loyalty program section with:', 
+      JSON.stringify(loyaltyProgram, null, 2));
 
     return (
       <section className="bg-white p-6 rounded-lg shadow">
@@ -94,26 +113,33 @@ export default function WorkflowResults({ data }: Props) {
             </div>
           </div>
 
-          {/* Objectives */}
-          {loyaltyProgram.objectives && loyaltyProgram.objectives.length > 0 && (
+          {/* Objectives - with explicit null check */}
+          {Array.isArray(loyaltyProgram.objectives) && (
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-gray-900">Recommended Objectives</h3>
-              {loyaltyProgram.objectives.map((objective, index) => (
-                <div key={index} className="bg-gray-50 p-4 rounded-md">
-                  <h4 className="font-medium text-gray-900">
-                    Objective {index + 1}
-                  </h4>
-                  <div className="mt-2 space-y-2">
-                    <p className="text-gray-700">{objective.objective}</p>
-                    {objective.rationale && objective.rationale !== 'Not provided' && (
-                      <div className="mt-2 pl-4 border-l-2 border-gray-200">
-                        <p className="text-sm text-gray-600 font-medium">Rationale:</p>
-                        <p className="text-gray-700">{objective.rationale}</p>
+              {loyaltyProgram.objectives.length > 0 ? (
+                loyaltyProgram.objectives.map((objective, index) => {
+                  console.log('Rendering objective:', objective, 'at index:', index);
+                  return (
+                    <div key={index} className="bg-gray-50 p-4 rounded-md">
+                      <h4 className="font-medium text-gray-900">
+                        Objective {index + 1}
+                      </h4>
+                      <div className="mt-2 space-y-2">
+                        <p className="text-gray-700">{objective.objective}</p>
+                        {objective.rationale && objective.rationale !== 'Not provided' && (
+                          <div className="mt-2 pl-4 border-l-2 border-gray-200">
+                            <p className="text-sm text-gray-600 font-medium">Rationale:</p>
+                            <p className="text-gray-700">{objective.rationale}</p>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-gray-500">No objectives available</p>
+              )}
             </div>
           )}
 
