@@ -6,7 +6,7 @@ import BusinessForm from './BusinessForm';
 import WorkflowResults from './WorkflowResults';
 import WorkflowStatus from './WorkflowStatus';
 
-type CompetitorInfo = {
+export type CompetitorAnalysisData = {
   company_name: string;
   industry?: string;
   main_competitors: string[];
@@ -15,7 +15,7 @@ type CompetitorInfo = {
   analysis_includes_loyalty: boolean;
 };
 
-type LoyaltyInfo = {
+export type LoyaltyProgramData = {
   company_name: string;
   industry: string;
   business_type: string;
@@ -31,9 +31,17 @@ type LoyaltyInfo = {
 };
 
 export type WorkflowData = {
-  competitorAnalysis: CompetitorInfo | null;
-  loyaltyProgram: LoyaltyInfo | null;
+  competitorAnalysis: CompetitorAnalysisData | null;
+  loyaltyProgram: LoyaltyProgramData | null;
 };
+
+function safeStringify(obj: any): string {
+  try {
+    return JSON.stringify(obj, null, 2);
+  } catch (error) {
+    return `Error stringifying object: ${error}`;
+  }
+}
 
 export default function BusinessAnalysisWorkflow() {
   console.log('Rendering BusinessAnalysisWorkflow');
@@ -53,19 +61,20 @@ export default function BusinessAnalysisWorkflow() {
       // Step 1: Competitor Analysis
       setCurrentStep('competitor-analysis');
       const competitorData = await analyzeCompetitors(businessName);
-      console.log('Competitor analysis completed:', competitorData);
+      console.log('Raw competitor data:', safeStringify(competitorData));
 
       // Step 2: Loyalty Program Recommendations
       setCurrentStep('loyalty-program');
       const loyaltyData = await getLoyaltyRecommendations(competitorData);
-      console.log('Loyalty analysis completed:', loyaltyData);
+      console.log('Raw loyalty data:', safeStringify(loyaltyData));
       
-      const newData = {
+      // Construct and validate the workflow data
+      const newData: WorkflowData = {
         competitorAnalysis: competitorData,
         loyaltyProgram: loyaltyData
       };
       
-      console.log('Setting workflow data:', newData);
+      console.log('Setting workflow data:', safeStringify(newData));
       setWorkflowData(newData);
     } catch (err) {
       console.error('Error in workflow:', err);
@@ -76,7 +85,14 @@ export default function BusinessAnalysisWorkflow() {
     }
   };
 
-  console.log('Current workflow data:', workflowData);
+  // Debug output for current state
+  console.log('Current state:', {
+    loading,
+    error,
+    currentStep,
+    hasWorkflowData: !!workflowData,
+    workflowData: safeStringify(workflowData)
+  });
 
   return (
     <div className="space-y-8">
@@ -96,8 +112,11 @@ export default function BusinessAnalysisWorkflow() {
       )}
       
       {workflowData && (
-        <div data-testid="workflow-results">
-          <WorkflowResults data={workflowData} />
+        <div className="mt-8">
+          <WorkflowResults 
+            data={workflowData} 
+            key={Date.now()} // Force re-render with new data
+          />
         </div>
       )}
     </div>
