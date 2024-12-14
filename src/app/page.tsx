@@ -1,4 +1,4 @@
-import BusinessAnalysisWorkflow from '@/components/BusinessAnalysisWorkflow';
+import BusinessAnalysisWorkflow from '../components/BusinessAnalysisWorkflow';
 
 export default function Home() {
   return (
