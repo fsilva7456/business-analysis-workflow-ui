@@ -6,14 +6,40 @@ import BusinessForm from './BusinessForm';
 import WorkflowResults from './WorkflowResults';
 import WorkflowStatus from './WorkflowStatus';
 
+export type CompetitorAnalysisData = {
+  company_name: string;
+  industry?: string;
+  main_competitors: string[];
+  competitor_details: string;
+  comparative_analysis: string;
+  analysis_includes_loyalty: boolean;
+};
+
+export type LoyaltyProgramData = {
+  company_name: string;
+  industry: string;
+  business_type: string;
+  objectives: Array<{
+    objective: string;
+    rationale: string;
+  }>;
+  metadata: {
+    model: string;
+    max_tokens: number;
+    temperature: number;
+  };
+};
+
+export type WorkflowResults = {
+  competitorAnalysis: CompetitorAnalysisData | null;
+  loyaltyProgram: LoyaltyProgramData | null;
+};
+
 export default function BusinessAnalysisWorkflow() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<string | null>(null);
-  const [results, setResults] = useState<{
-    competitorAnalysis?: any;
-    loyaltyProgram?: any;
-  } | null>(null);
+  const [results, setResults] = useState<WorkflowResults | null>(null);
 
   const handleSubmit = async (businessName: string) => {
     setLoading(true);
@@ -31,9 +57,10 @@ export default function BusinessAnalysisWorkflow() {
       const loyaltyData = await getLoyaltyRecommendations(competitorData);
       console.log('Got loyalty data:', loyaltyData);
       
+      // Set results with proper typing
       setResults({
         competitorAnalysis: competitorData,
-        loyaltyProgram: loyaltyData,
+        loyaltyProgram: loyaltyData
       });
     } catch (err) {
       console.error('Workflow error:', err);
