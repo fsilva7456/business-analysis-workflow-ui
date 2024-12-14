@@ -24,8 +24,12 @@ export type MarketInsight = {
 };
 
 export type CompetitorAnalysisResponse = {
-  competitors: Competitor[];
-  marketInsights: MarketInsight[];
+  company_name: string;
+  industry?: string;
+  main_competitors: string[];
+  competitor_details: string;
+  comparative_analysis: string;
+  analysis_includes_loyalty: boolean;
 };
 
 export type LoyaltyObjective = {
@@ -50,7 +54,6 @@ export type LoyaltyProgramResponse = {
 const axiosConfig = {
   headers: {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
   },
 };
 
@@ -60,10 +63,13 @@ export const analyzeCompetitors = async (businessName: string): Promise<Competit
   }
 
   try {
-    console.log('Making request to:', `${BASE_URLS.competitorAnalysis}/analyze`);
+    console.log('Making request to:', `${BASE_URLS.competitorAnalysis}/api/v1/competitor-analysis`);
     const response = await axios.post(
-      `${BASE_URLS.competitorAnalysis}/analyze`,
-      { business_name: businessName },
+      `${BASE_URLS.competitorAnalysis}/api/v1/competitor-analysis`,
+      { 
+        company_name: businessName,
+        include_loyalty_program: true
+      },
       axiosConfig
     );
     return response.data;
