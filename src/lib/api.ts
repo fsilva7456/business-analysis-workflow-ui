@@ -18,11 +18,11 @@ const BASE_URLS = {
   loyaltyProgram: ensureFullUrl(LOYALTY_API),
 };
 
-const axiosConfig = {
-  headers: {
-    'Content-Type': 'application/json',
-  },
-};
+// Log the configured URLs during initialization
+console.log('API URLs:', {
+  competitorAnalysis: BASE_URLS.competitorAnalysis,
+  loyaltyProgram: BASE_URLS.loyaltyProgram
+});
 
 export type CompetitorAnalysisResponse = {
   company_name: string;
@@ -48,23 +48,6 @@ export type LoyaltyProgramResponse = {
   };
 };
 
-export const checkApiHealth = async (apiUrl: string) => {
-  if (!apiUrl) {
-    throw new Error('API URL not configured');
-  }
-
-  try {
-    const healthEndpoint = `${apiUrl}/health`;
-    console.log('Checking health at:', healthEndpoint);
-    const response = await axios.get(healthEndpoint);
-    console.log('Health check response:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Health check failed:', error);
-    throw error;
-  }
-};
-
 export const analyzeCompetitors = async (businessName: string): Promise<CompetitorAnalysisResponse> => {
   const url = BASE_URLS.competitorAnalysis;
   if (!url) {
@@ -72,12 +55,13 @@ export const analyzeCompetitors = async (businessName: string): Promise<Competit
   }
 
   try {
-    // First check if the API is accessible
-    await checkApiHealth(url);
-
     const endpoint = '/api/v1/competitor-analysis';
     const fullUrl = `${url}${endpoint}`;
-    console.log('Making competitor analysis request to:', fullUrl);
+    
+    console.log('Making competitor analysis request:', {
+      url: fullUrl,
+      payload: { company_name: businessName, include_loyalty_program: true }
+    });
     
     const response = await axios.post(
       fullUrl,
@@ -85,7 +69,11 @@ export const analyzeCompetitors = async (businessName: string): Promise<Competit
         company_name: businessName,
         include_loyalty_program: true
       },
-      axiosConfig
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
     );
     
     console.log('Competitor analysis response:', response.data);
@@ -109,21 +97,28 @@ export const getLoyaltyRecommendations = async (
   }
 
   try {
-    // First check if the API is accessible
-    await checkApiHealth(url);
-
     const endpoint = '/api/v1/analyze-objectives';
     const fullUrl = `${url}${endpoint}`;
-    console.log('Making loyalty analysis request to:', fullUrl);
+    
+    const requestPayload = {
+      company_name: competitorData.company_name,
+      industry: competitorData.industry,
+      competitor_analysis: competitorData
+    };
+
+    console.log('Making loyalty analysis request:', {
+      url: fullUrl,
+      payload: requestPayload
+    });
 
     const response = await axios.post(
       fullUrl,
-      { 
-        company_name: competitorData.company_name,
-        industry: competitorData.industry,
-        competitor_analysis: competitorData
-      },
-      axiosConfig
+      requestPayload,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
     );
 
     console.log('Loyalty analysis response:', response.data);
