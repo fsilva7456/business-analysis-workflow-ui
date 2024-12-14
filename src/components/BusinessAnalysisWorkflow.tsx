@@ -24,16 +24,19 @@ export default function BusinessAnalysisWorkflow() {
       // Step 1: Competitor Analysis
       setCurrentStep('competitor-analysis');
       const competitorData = await analyzeCompetitors(businessName);
-      
+      console.log('Got competitor data:', competitorData);
+
       // Step 2: Loyalty Program Recommendations
       setCurrentStep('loyalty-program');
       const loyaltyData = await getLoyaltyRecommendations(competitorData);
+      console.log('Got loyalty data:', loyaltyData);
       
       setResults({
         competitorAnalysis: competitorData,
         loyaltyProgram: loyaltyData,
       });
     } catch (err) {
+      console.error('Workflow error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
