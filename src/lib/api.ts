@@ -18,12 +18,6 @@ const BASE_URLS = {
   loyaltyProgram: ensureFullUrl(LOYALTY_API),
 };
 
-// Log the configured URLs during initialization
-console.log('API URLs:', {
-  competitorAnalysis: BASE_URLS.competitorAnalysis,
-  loyaltyProgram: BASE_URLS.loyaltyProgram
-});
-
 export type CompetitorAnalysisResponse = {
   company_name: string;
   industry?: string;
@@ -100,10 +94,27 @@ export const getLoyaltyRecommendations = async (
     const endpoint = '/api/v1/analyze-objectives';
     const fullUrl = `${url}${endpoint}`;
     
+    // Extract competitor information from the competitor analysis
+    const competitors = competitorData.main_competitors.map(name => ({
+      name,
+      loyalty_program_description: null,
+      strengths: [],
+      weaknesses: []
+    }));
+
     const requestPayload = {
       company_name: competitorData.company_name,
-      industry: competitorData.industry,
-      competitor_analysis: competitorData
+      industry: competitorData.industry || 'Unknown',
+      business_type: 'B2C', // Default to B2C
+      customer_segments: ['General Consumers'], // Default segment
+      competitors,
+      // Optional fields
+      current_loyalty_program: null,
+      current_challenges: null,
+      business_goals: null,
+      // Analysis configuration
+      max_tokens: 2000,
+      temperature: 0.7
     };
 
     console.log('Making loyalty analysis request:', {
