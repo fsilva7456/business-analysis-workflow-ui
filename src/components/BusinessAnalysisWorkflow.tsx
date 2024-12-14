@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from 'react';
 import { analyzeCompetitors, getLoyaltyRecommendations } from '../lib/api';
 import BusinessForm from './BusinessForm';

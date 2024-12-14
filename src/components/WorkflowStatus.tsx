@@ -1,3 +1,5 @@
+"use client";
+
 type WorkflowStatusProps = {
   loading: boolean;
   currentStep: string | null;
