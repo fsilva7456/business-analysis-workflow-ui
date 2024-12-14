@@ -1,19 +1,13 @@
 "use client";
 
-import { CompetitorAnalysisResponse, LoyaltyProgramResponse } from '../lib/api';
+import { WorkflowResults as WorkflowResultsType } from './BusinessAnalysisWorkflow';
 
-type WorkflowResultsProps = {
-  results: {
-    competitorAnalysis?: CompetitorAnalysisResponse;
-    loyaltyProgram?: LoyaltyProgramResponse;
-  };
+type Props = {
+  results: WorkflowResultsType;
 };
 
-export default function WorkflowResults({ results }: WorkflowResultsProps) {
-  console.log('Rendering WorkflowResults with:', JSON.stringify(results, null, 2));
-  
+export default function WorkflowResults({ results }: Props) {
   if (!results) {
-    console.log('No results to display');
     return null;
   }
 
@@ -36,7 +30,7 @@ export default function WorkflowResults({ results }: WorkflowResultsProps) {
             </div>
 
             {/* Competitors List */}
-            {Array.isArray(competitorAnalysis.main_competitors) && competitorAnalysis.main_competitors.length > 0 && (
+            {competitorAnalysis.main_competitors?.length > 0 && (
               <div>
                 <h3 className="text-lg font-medium text-gray-900">Main Competitors</h3>
                 <div className="mt-2 bg-gray-50 p-4 rounded-md">
@@ -86,13 +80,13 @@ export default function WorkflowResults({ results }: WorkflowResultsProps) {
               <h3 className="text-lg font-medium text-gray-900">Program Context</h3>
               <div className="mt-2 bg-gray-50 p-4 rounded-md">
                 <p><strong>Company:</strong> {loyaltyProgram.company_name}</p>
-                <p><strong>Industry:</strong> {loyaltyProgram.industry || 'Not specified'}</p>
+                <p><strong>Industry:</strong> {loyaltyProgram.industry}</p>
                 <p><strong>Business Type:</strong> {loyaltyProgram.business_type}</p>
               </div>
             </div>
 
             {/* Objectives */}
-            {Array.isArray(loyaltyProgram.objectives) && loyaltyProgram.objectives.length > 0 && (
+            {loyaltyProgram.objectives?.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-gray-900">Recommended Objectives</h3>
                 {loyaltyProgram.objectives.map((objective, index) => (
@@ -102,14 +96,13 @@ export default function WorkflowResults({ results }: WorkflowResultsProps) {
                     </h4>
                     <div className="mt-2 space-y-2">
                       <p className="text-gray-700">
-                        <span className="font-medium">Objective:</span><br />
                         {objective.objective}
                       </p>
-                      {objective.rationale && (
-                        <p className="text-gray-700">
-                          <span className="font-medium">Rationale:</span><br />
-                          {objective.rationale}
-                        </p>
+                      {objective.rationale && objective.rationale !== 'Not provided' && (
+                        <div className="mt-2 pl-4 border-l-2 border-gray-200">
+                          <p className="text-sm text-gray-600 font-medium">Rationale:</p>
+                          <p className="text-gray-700">{objective.rationale}</p>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -120,9 +113,8 @@ export default function WorkflowResults({ results }: WorkflowResultsProps) {
             {/* Metadata */}
             {loyaltyProgram.metadata && (
               <div className="text-sm text-gray-500 mt-4 p-4 bg-gray-50 rounded-md">
-                <p><strong>Analysis Details:</strong></p>
+                <p><strong>Analysis Details</strong></p>
                 <p>Model: {loyaltyProgram.metadata.model}</p>
-                <p>Max Tokens: {loyaltyProgram.metadata.max_tokens}</p>
                 <p>Temperature: {loyaltyProgram.metadata.temperature}</p>
               </div>
             )}
