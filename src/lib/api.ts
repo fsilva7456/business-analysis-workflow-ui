@@ -18,6 +18,12 @@ const BASE_URLS = {
   loyaltyProgram: ensureFullUrl(LOYALTY_API),
 };
 
+const axiosConfig = {
+  headers: {
+    'Content-Type': 'application/json',
+  },
+};
+
 export type CompetitorAnalysisResponse = {
   company_name: string;
   industry?: string;
@@ -28,33 +34,27 @@ export type CompetitorAnalysisResponse = {
 };
 
 export type LoyaltyProgramResponse = {
+  company_name: string;
+  industry?: string;
+  business_type?: string;
   objectives: Array<{
     objective: string;
-    metrics: string[];
-    priority: 'high' | 'medium' | 'low';
+    rationale: string;
   }>;
-  recommendations: Array<{
-    feature: string;
-    description: string;
-    benefits: string[];
-    implementation: string;
-  }>;
+  metadata: {
+    model: string;
+    max_tokens: number;
+    temperature: number;
+  };
 };
 
-const axiosConfig = {
-  headers: {
-    'Content-Type': 'application/json',
-  },
-};
-
-export const checkApiHealth = async () => {
-  const url = BASE_URLS.competitorAnalysis;
-  if (!url) {
-    throw new Error('Competitor Analysis API URL not configured');
+export const checkApiHealth = async (apiUrl: string) => {
+  if (!apiUrl) {
+    throw new Error('API URL not configured');
   }
 
   try {
-    const healthEndpoint = `${url}/health`;
+    const healthEndpoint = `${apiUrl}/health`;
     console.log('Checking health at:', healthEndpoint);
     const response = await axios.get(healthEndpoint);
     console.log('Health check response:', response.data);
@@ -73,42 +73,23 @@ export const analyzeCompetitors = async (businessName: string): Promise<Competit
 
   try {
     // First check if the API is accessible
-    await checkApiHealth();
+    await checkApiHealth(url);
 
-    // Try each potential endpoint format
-    const endpoints = [
-      '/api/v1/competitor-analysis',
-      '/competitor-analysis',
-      '/analyze'
-    ];
-
-    let lastError = null;
+    const endpoint = '/api/v1/competitor-analysis';
+    const fullUrl = `${url}${endpoint}`;
+    console.log('Making competitor analysis request to:', fullUrl);
     
-    for (const endpoint of endpoints) {
-      try {
-        const fullUrl = `${url}${endpoint}`;
-        console.log('Attempting request to:', fullUrl);
-        
-        const response = await axios.post(
-          fullUrl,
-          { 
-            company_name: businessName,
-            include_loyalty_program: true
-          },
-          axiosConfig
-        );
-        
-        console.log('Successful response from:', fullUrl);
-        return response.data;
-      } catch (error) {
-        console.log(`Failed attempt to ${endpoint}:`, error);
-        lastError = error;
-        // Add a small delay before trying the next endpoint
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    }
-
-    throw lastError;
+    const response = await axios.post(
+      fullUrl,
+      { 
+        company_name: businessName,
+        include_loyalty_program: true
+      },
+      axiosConfig
+    );
+    
+    console.log('Competitor analysis response:', response.data);
+    return response.data;
   } catch (error) {
     console.error('Error analyzing competitors:', error);
     if (axios.isAxiosError(error)) {
@@ -128,13 +109,24 @@ export const getLoyaltyRecommendations = async (
   }
 
   try {
-    const fullUrl = `${url}/objectives`;
-    console.log('Making request to:', fullUrl);
+    // First check if the API is accessible
+    await checkApiHealth(url);
+
+    const endpoint = '/api/v1/analyze-objectives';
+    const fullUrl = `${url}${endpoint}`;
+    console.log('Making loyalty analysis request to:', fullUrl);
+
     const response = await axios.post(
       fullUrl,
-      { competitor_analysis: competitorData },
+      { 
+        company_name: competitorData.company_name,
+        industry: competitorData.industry,
+        competitor_analysis: competitorData
+      },
       axiosConfig
     );
+
+    console.log('Loyalty analysis response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error getting loyalty recommendations:', error);
