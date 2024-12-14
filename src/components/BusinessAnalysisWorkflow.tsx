@@ -6,7 +6,7 @@ import BusinessForm from './BusinessForm';
 import WorkflowResults from './WorkflowResults';
 import WorkflowStatus from './WorkflowStatus';
 
-export type CompetitorAnalysisData = {
+type CompetitorInfo = {
   company_name: string;
   industry?: string;
   main_competitors: string[];
@@ -15,7 +15,7 @@ export type CompetitorAnalysisData = {
   analysis_includes_loyalty: boolean;
 };
 
-export type LoyaltyProgramData = {
+type LoyaltyInfo = {
   company_name: string;
   industry: string;
   business_type: string;
@@ -30,46 +30,53 @@ export type LoyaltyProgramData = {
   };
 };
 
-export type WorkflowResults = {
-  competitorAnalysis: CompetitorAnalysisData | null;
-  loyaltyProgram: LoyaltyProgramData | null;
+export type WorkflowData = {
+  competitorAnalysis: CompetitorInfo | null;
+  loyaltyProgram: LoyaltyInfo | null;
 };
 
 export default function BusinessAnalysisWorkflow() {
+  console.log('Rendering BusinessAnalysisWorkflow');
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<string | null>(null);
-  const [results, setResults] = useState<WorkflowResults | null>(null);
+  const [workflowData, setWorkflowData] = useState<WorkflowData | null>(null);
 
   const handleSubmit = async (businessName: string) => {
+    console.log('Starting analysis for:', businessName);
     setLoading(true);
     setError(null);
-    setResults(null);
+    setWorkflowData(null);
     
     try {
       // Step 1: Competitor Analysis
       setCurrentStep('competitor-analysis');
       const competitorData = await analyzeCompetitors(businessName);
-      console.log('Got competitor data:', competitorData);
+      console.log('Competitor analysis completed:', competitorData);
 
       // Step 2: Loyalty Program Recommendations
       setCurrentStep('loyalty-program');
       const loyaltyData = await getLoyaltyRecommendations(competitorData);
-      console.log('Got loyalty data:', loyaltyData);
+      console.log('Loyalty analysis completed:', loyaltyData);
       
-      // Set results with proper typing
-      setResults({
+      const newData = {
         competitorAnalysis: competitorData,
         loyaltyProgram: loyaltyData
-      });
+      };
+      
+      console.log('Setting workflow data:', newData);
+      setWorkflowData(newData);
     } catch (err) {
-      console.error('Workflow error:', err);
+      console.error('Error in workflow:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
       setCurrentStep(null);
     }
   };
+
+  console.log('Current workflow data:', workflowData);
 
   return (
     <div className="space-y-8">
@@ -88,7 +95,11 @@ export default function BusinessAnalysisWorkflow() {
         </div>
       )}
       
-      {results && <WorkflowResults results={results} />}
+      {workflowData && (
+        <div data-testid="workflow-results">
+          <WorkflowResults data={workflowData} />
+        </div>
+      )}
     </div>
   );
 }
