@@ -4,10 +4,18 @@ import axios from 'axios';
 const COMPETITOR_API = process.env.NEXT_PUBLIC_COMPETITOR_ANALYSIS_API;
 const LOYALTY_API = process.env.NEXT_PUBLIC_LOYALTY_PROGRAM_API;
 
-// Ensure URLs don't end with a slash
+// Ensure URLs have protocol and no trailing slash
+const ensureFullUrl = (url: string | undefined) => {
+  if (!url) return '';
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `https://${url}`;
+  }
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+
 const BASE_URLS = {
-  competitorAnalysis: COMPETITOR_API?.endsWith('/') ? COMPETITOR_API.slice(0, -1) : COMPETITOR_API,
-  loyaltyProgram: LOYALTY_API?.endsWith('/') ? LOYALTY_API.slice(0, -1) : LOYALTY_API,
+  competitorAnalysis: ensureFullUrl(COMPETITOR_API),
+  loyaltyProgram: ensureFullUrl(LOYALTY_API),
 };
 
 export type CompetitorAnalysisResponse = {
@@ -33,7 +41,6 @@ export type LoyaltyProgramResponse = {
   }>;
 };
 
-// Add CORS headers to the requests
 const axiosConfig = {
   headers: {
     'Content-Type': 'application/json',
@@ -41,14 +48,16 @@ const axiosConfig = {
 };
 
 export const checkApiHealth = async () => {
-  if (!BASE_URLS.competitorAnalysis) {
+  const url = BASE_URLS.competitorAnalysis;
+  if (!url) {
     throw new Error('Competitor Analysis API URL not configured');
   }
 
   try {
-    const healthEndpoint = `${BASE_URLS.competitorAnalysis}/health`;
+    const healthEndpoint = `${url}/health`;
     console.log('Checking health at:', healthEndpoint);
     const response = await axios.get(healthEndpoint);
+    console.log('Health check response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Health check failed:', error);
@@ -57,7 +66,8 @@ export const checkApiHealth = async () => {
 };
 
 export const analyzeCompetitors = async (businessName: string): Promise<CompetitorAnalysisResponse> => {
-  if (!BASE_URLS.competitorAnalysis) {
+  const url = BASE_URLS.competitorAnalysis;
+  if (!url) {
     throw new Error('Competitor Analysis API URL not configured');
   }
 
@@ -76,11 +86,11 @@ export const analyzeCompetitors = async (businessName: string): Promise<Competit
     
     for (const endpoint of endpoints) {
       try {
-        const url = `${BASE_URLS.competitorAnalysis}${endpoint}`;
-        console.log('Attempting request to:', url);
+        const fullUrl = `${url}${endpoint}`;
+        console.log('Attempting request to:', fullUrl);
         
         const response = await axios.post(
-          url,
+          fullUrl,
           { 
             company_name: businessName,
             include_loyalty_program: true
@@ -88,20 +98,22 @@ export const analyzeCompetitors = async (businessName: string): Promise<Competit
           axiosConfig
         );
         
-        console.log('Successful response from:', url);
+        console.log('Successful response from:', fullUrl);
         return response.data;
       } catch (error) {
         console.log(`Failed attempt to ${endpoint}:`, error);
         lastError = error;
+        // Add a small delay before trying the next endpoint
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 
-    // If we get here, all attempts failed
     throw lastError;
   } catch (error) {
     console.error('Error analyzing competitors:', error);
     if (axios.isAxiosError(error)) {
-      throw new Error(`Error analyzing competitors: ${error.response?.data?.detail || error.message}`);
+      const errorDetail = error.response?.data?.detail || error.message;
+      throw new Error(`Error analyzing competitors: ${errorDetail}`);
     }
     throw error;
   }
@@ -110,14 +122,16 @@ export const analyzeCompetitors = async (businessName: string): Promise<Competit
 export const getLoyaltyRecommendations = async (
   competitorData: CompetitorAnalysisResponse
 ): Promise<LoyaltyProgramResponse> => {
-  if (!BASE_URLS.loyaltyProgram) {
+  const url = BASE_URLS.loyaltyProgram;
+  if (!url) {
     throw new Error('Loyalty Program API URL not configured');
   }
 
   try {
-    console.log('Making request to:', `${BASE_URLS.loyaltyProgram}/objectives`);
+    const fullUrl = `${url}/objectives`;
+    console.log('Making request to:', fullUrl);
     const response = await axios.post(
-      `${BASE_URLS.loyaltyProgram}/objectives`,
+      fullUrl,
       { competitor_analysis: competitorData },
       axiosConfig
     );
@@ -125,7 +139,8 @@ export const getLoyaltyRecommendations = async (
   } catch (error) {
     console.error('Error getting loyalty recommendations:', error);
     if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data?.message || `Error getting loyalty recommendations: ${error.message}`);
+      const errorDetail = error.response?.data?.detail || error.message;
+      throw new Error(`Error getting loyalty recommendations: ${errorDetail}`);
     }
     throw error;
   }
